@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Block Log">
+<meta name="theme-color" content="#1f5fa8">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-180.png">
+<title>Block Log</title>
+<style>
+:root{--bg:#f4f7fb;--card:#fff;--ink:#14212e;--mute:#5b6b7b;--line:#d6dee8;--pri:#1f5fa8;--pri2:#e8f0fa;--yes:#1d7a4f;--no:#c0392b;--part:#c27a00;--warn:#fff4e5}
+@media (prefers-color-scheme:dark){:root{--bg:#0e1620;--card:#16212d;--ink:#e6edf4;--mute:#97a6b5;--line:#2a3846;--pri:#5b9be0;--pri2:#1b2d42;--yes:#3fbf83;--no:#ff6b5e;--part:#f2b33d;--warn:#3a2c12}}
+*{box-sizing:border-box;min-width:0}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;-webkit-tap-highlight-color:transparent}
+header{position:sticky;top:0;z-index:5;background:var(--pri);color:#fff;padding:calc(12px + env(safe-area-inset-top)) calc(16px + env(safe-area-inset-right)) 12px calc(16px + env(safe-area-inset-left));display:flex;align-items:center;gap:10px}
+header h1{font-size:19px;margin:0;flex:1;font-weight:650}
+header button{background:rgba(255,255,255,.16);color:#fff;border:0;border-radius:10px;padding:9px 13px;font:inherit;font-size:15px;min-height:40px}
+main{max-width:720px;margin:0 auto;padding:12px 12px 120px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:12px}
+.card h2{font-size:15px;margin:0 0 10px;color:var(--pri);font-weight:700}
+label.f{display:block;font-size:13px;color:var(--mute);margin:10px 0 4px}
+input,select,textarea{width:100%;font:inherit;font-size:16px;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:10px 12px;min-height:44px}
+textarea{min-height:84px;resize:vertical}
+input:focus,select:focus,textarea:focus,button:focus-visible{outline:2px solid var(--pri);outline-offset:1px}
+.row{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px}
+.yn{display:flex;align-items:center;gap:10px;padding:8px 0;border-top:1px solid var(--line)}
+.yn:first-of-type{border-top:0}
+.yn span{flex:1;font-size:15px}
+.seg{display:flex;border:1px solid var(--line);border-radius:10px;overflow:hidden;flex:none}
+.seg button{border:0;background:var(--card);color:var(--ink);font:inherit;font-size:14px;padding:0 13px;min-height:40px;min-width:48px}
+.seg button+button{border-left:1px solid var(--line)}
+.seg button.on{background:var(--pri);color:#fff;font-weight:650}
+.seg button.on[data-v=Yes]{background:var(--yes);color:#fff}
+.seg button.on[data-v=No]{background:var(--no);color:#fff}
+.seg button.on[data-v=Partial]{background:var(--part);color:#fff}
+.seg button.on[data-v=""]{background:var(--mute);color:#fff}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{display:flex;align-items:center;gap:8px;border:1px solid var(--line);border-radius:999px;padding:8px 13px;min-height:42px;font-size:15px;background:var(--bg)}
+.chip input{width:18px;height:18px;min-height:0;margin:0;accent-color:var(--pri)}
+.chip:has(input:checked){background:var(--pri2);border-color:var(--pri)}
+.la{border:1px dashed var(--line);border-radius:12px;padding:4px 10px 10px;margin-top:10px;position:relative}
+.la .x{position:absolute;top:6px;right:6px}
+.btn{font:inherit;font-size:16px;border-radius:12px;border:1px solid var(--line);background:var(--card);color:var(--ink);padding:10px 16px;min-height:46px}
+.btn.pri{background:var(--pri);border-color:var(--pri);color:#fff;font-weight:650}
+.btn.danger{color:var(--no);border-color:var(--no)}
+.btn.small{min-height:38px;padding:6px 12px;font-size:14px}
+.bar{position:fixed;left:0;right:0;bottom:0;background:var(--card);border-top:1px solid var(--line);padding:10px 12px calc(10px + env(safe-area-inset-bottom));display:flex;gap:10px;justify-content:center;z-index:5}
+.bar .btn{flex:1;max-width:340px}
+.hide{display:none!important}
+.alert{background:var(--warn);border:1px solid var(--part);border-radius:12px;padding:10px 12px;font-size:14px;margin-bottom:12px}
+.rec{display:block;width:100%;text-align:left;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px 14px;margin-bottom:10px;font:inherit;color:var(--ink)}
+.rec .t{display:flex;justify-content:space-between;gap:8px;font-weight:650}
+.rec .s{color:var(--mute);font-size:14px;margin-top:2px}
+.tag{display:inline-block;font-size:12px;font-weight:650;border-radius:6px;padding:2px 7px;margin:6px 6px 0 0;background:var(--pri2);color:var(--pri)}
+.tag.no{background:transparent;border:1px solid var(--no);color:var(--no)}
+.tag.pend{background:transparent;border:1px solid var(--part);color:var(--part)}
+.stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-bottom:12px}
+.stat{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px;text-align:center}
+.stat b{display:block;font-size:24px;color:var(--pri)}
+.stat span{font-size:12px;color:var(--mute)}
+.empty{text-align:center;color:var(--mute);padding:40px 10px}
+.toast{position:fixed;left:50%;bottom:90px;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:10px;font-size:14px;z-index:9;max-width:90vw}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.45);display:flex;align-items:flex-end;justify-content:center;z-index:8}
+.modal .card{width:100%;max-width:560px;max-height:88vh;overflow-y:auto;margin:0;border-radius:16px 16px 0 0;padding-bottom:calc(16px + env(safe-area-inset-bottom))}
+.modal .btn{width:100%;margin-top:8px}
+.modal .yn .btn{width:auto;margin-top:0;flex:none}
+.filters{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;margin-bottom:12px}
+</style>
+</head>
+<body>
+<header><h1 id="title">Block Log</h1><button id="menuBtn" type="button">Export / backup</button></header>
+
+<main id="listView">
+  <div class="stats" id="stats"></div>
+  <div class="filters"><input id="q" type="search" placeholder="Search file no., block, site…" aria-label="Search records"><select id="period" aria-label="Period"><option value="all">All time</option><option value="30">Last 30 days</option><option value="365">Last 12 months</option></select></div>
+  <div id="list"></div>
+</main>
+
+<main id="formView" class="hide">
+<form id="f" autocomplete="off">
+  <section class="card"><h2>Patient</h2>
+    <div class="row">
+      <div><label class="f" for="date">Date</label><input id="date" name="date" type="date" required></div>
+      <div><label class="f" for="fileNo">File number *</label><input id="fileNo" name="fileNo" required inputmode="text"></div>
+    </div>
+    <div class="row">
+      <div><label class="f" for="age">Age</label><input id="age" name="age" type="number" min="0" max="120" step="1" inputmode="numeric"></div>
+      <div><label class="f" for="ageUnit">Unit</label><select id="ageUnit" name="ageUnit"><option>years</option><option>months</option></select></div>
+    </div>
+    <label class="f" for="site">Site of care *</label>
+    <select id="site" name="site" required></select>
+  </section>
+
+  <section class="card"><h2>Pre-block timeout ("Stop Before You Block")</h2><div id="timeout"></div></section>
+
+  <section class="card"><h2>Block performed</h2>
+    <label class="f" for="block">Block *</label><select id="block" name="block" required></select>
+    <div id="blockOtherWrap" class="hide"><label class="f" for="blockOther">Specify block</label><input id="blockOther" name="blockOther"></div>
+    <label class="f">Side</label><div class="seg" id="side" data-opts="Left|Right|Bilateral|Midline"></div>
+  </section>
+
+  <section class="card"><h2>Safety measures used</h2><div class="chips" id="safety"></div></section>
+
+  <section class="card"><h2>Local anaesthetic</h2>
+    <div id="las"></div>
+    <button type="button" class="btn small" id="addLa" style="margin-top:10px">+ Add another agent</button>
+    <label class="f">Adjuvants (optional)</label><div class="chips" id="adjuvants"></div>
+  </section>
+
+  <section class="card"><h2>Infection prevention</h2><div class="chips" id="infection"></div></section>
+
+  <section class="card"><h2>Indwelling catheter</h2>
+    <div class="seg" id="catheter" data-opts="Yes|No"></div>
+    <div id="catWrap" class="hide"><label class="f" for="catheterNote">Catheter details (type, depth at skin, plan)</label><input id="catheterNote" name="catheterNote"></div>
+  </section>
+
+  <section class="card"><h2>Postoperative block efficacy</h2>
+    <div class="seg" id="efficacy" data-opts="Yes|Partial|No|"></div>
+    <p style="font-size:13px;color:var(--mute);margin:8px 0 0">Leave as “—” to mark as pending and complete it later.</p>
+  </section>
+
+  <section class="card"><h2>Perioperative complications / problems</h2>
+    <label class="chip" style="display:inline-flex"><input type="checkbox" id="compOn"> Complications or problems noted</label>
+    <div id="compWrap" class="hide">
+      <div class="chips" id="complications" style="margin-top:10px"></div>
+      <label class="f" for="compNote">Description</label><textarea id="compNote" name="compNote" placeholder="What happened, management, follow-up…"></textarea>
+    </div>
+  </section>
+
+  <section class="card"><h2>Notes (optional)</h2><textarea id="notes" name="notes"></textarea></section>
+  <div id="formActions"></div>
+</form>
+</main>
+
+<div class="bar" id="listBar"><button class="btn" id="sitesBtn" type="button" style="flex:0 1 150px">Sites of care</button><button class="btn pri" id="newBtn" type="button">+ New block</button></div>
+<div class="bar hide" id="formBar"><button class="btn" id="cancelBtn" type="button">Cancel</button><button class="btn pri" id="saveBtn" type="button">Save</button></div>
+<div id="modalRoot"></div>
+
+<script>
+{
+// Sites of care are entirely user-defined. Former built-in list, kept only to migrate existing installs:
+const OLD_SITES=["Nelspruit Mediclinic","Nelspruit Mediclinic Day Clinic","Cure Day Mbombela","Lowveld Eye Institute","Busamed Lowveld Hospital","Surgiclinic"];
+const TIMEOUT=[["patient","Correct patient (2 identifiers)"],["consent","Consent for block confirmed"],["procedure","Surgical procedure & site confirmed"],["side","Block side confirmed & site marked visible"],["blockType","Planned block confirmed"],["allergies","Allergies checked"],["coag","Anticoagulants / coagulation checked"],["monitoring","Monitoring applied (ECG, SpO₂, NIBP)"],["iv","IV access in place"],["resus","Resuscitation equipment & lipid emulsion available"],["sbyb","Stop-before-you-block repeated immediately before needle"]];
+const SAFETY=["Ultrasound guidance","Peripheral nerve stimulator","Neuromuscular monitor","Injection opening pressure monitor","Test dose","Incremental injection with aspiration"];
+const INFECTION=["Hand hygiene","Chlorhexidine-alcohol skin prep (allowed to dry)","Povidone-iodine skin prep","Sterile gloves","Mask","Cap","Sterile gown","Sterile drape","Sterile probe cover","Sterile gel","Bacterial filter (catheter)"];
+const ADJ=["Adrenaline","Dexamethasone (perineural)","Dexamethasone (intravenous)","Dexmedetomidine","Clonidine","Fentanyl","Morphine","Sufentanil"];
+const COMPS=["Vascular puncture","Paraesthesia / pain on injection","High opening pressure","LAST signs","Failed / inadequate block — supplemented","Converted to GA","Hypotension","Bradycardia","High / total spinal","Accidental dural puncture","Post-dural puncture headache","Phrenic palsy / dyspnoea","Horner's syndrome","Hoarseness","Pneumothorax","Haematoma","Catheter problem","Urinary retention","Pruritus","Nausea / vomiting","Persistent neurological symptoms","Globe / ocular complication","Other"];
+const LA={"Bupivacaine":["0.0625%","0.1%","0.125%","0.25%","0.375%","0.5%"],"Bupivacaine hyperbaric (heavy)":["0.5%"],"Levobupivacaine":["0.0625%","0.1%","0.125%","0.25%","0.375%","0.5%","0.75%"],"Ropivacaine":["0.1%","0.2%","0.3%","0.375%","0.5%","0.75%","1%"],"Lidocaine (lignocaine)":["0.5%","1%","1.5%","2%"],"Lidocaine with adrenaline":["1% + 1:200 000","2% + 1:200 000","2% + 1:80 000"],"Lidocaine hyperbaric":["5%"],"Prilocaine hyperbaric":["2%"],"Chloroprocaine":["1%","2%","3%"],"Mepivacaine":["1%","1.5%","2%"],"Articaine":["4% + 1:100 000","4% + 1:200 000"],"Other":[]};
+const BLOCKS={"Neuraxial":["Spinal","Epidural – lumbar","Epidural – thoracic","Combined spinal-epidural","Caudal","Continuous spinal"],"Upper limb":["Interscalene","Superior trunk","Supraclavicular","Infraclavicular","Costoclavicular","Axillary brachial plexus","Suprascapular","Forearm nerve block(s)","Wrist block","Digital block","IV regional (Bier block)"],"Lower limb":["Femoral","Fascia iliaca – suprainguinal","Fascia iliaca – infrainguinal","PENG","Lateral femoral cutaneous","Obturator","Lumbar plexus","Adductor canal","Femoral triangle","Saphenous","IPACK","Genicular nerve block","Sciatic – parasacral","Sciatic – subgluteal","Popliteal sciatic","Ankle block","Metatarsal / digital"],"Truncal":["Paravertebral – thoracic","Erector spinae plane","PECS I","PECS II","Serratus anterior plane","Parasternal / PIFB","Intercostal","Transversus abdominis plane","Rectus sheath","Quadratus lumborum","Ilioinguinal / iliohypogastric","External oblique intercostal","Penile block","Pudendal"],"Head, neck & eye":["Superficial cervical plexus","Deep / intermediate cervical plexus","Scalp block","Peribulbar","Retrobulbar","Sub-Tenon's","Topical + intracameral","Greater occipital","Maxillary / mandibular nerve"],"Other":["Other (specify)"]};
+
+const $=s=>document.querySelector(s);
+const esc=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const today=()=>{const d=new Date();d.setMinutes(d.getMinutes()-d.getTimezoneOffset());return d.toISOString().slice(0,10)};
+
+// ---------- storage: native SQLite on Android (window.Android bridge); IndexedDB in the iPhone/web version ----------
+const N=window.Android;
+let mem=[],idb=null;
+const idbReq=r=>new Promise((ok,no)=>{r.onsuccess=()=>ok(r.result);r.onerror=()=>no(r.error)});
+async function initStore(){
+  if(N)return;
+  try{
+    idb=await new Promise((ok,no)=>{const r=indexedDB.open("blocklog",1);r.onupgradeneeded=()=>r.result.createObjectStore("records",{keyPath:"id"});r.onsuccess=()=>ok(r.result);r.onerror=()=>no(r.error)});
+    mem=await idbReq(idb.transaction("records").objectStore("records").getAll());
+    try{navigator.storage&&navigator.storage.persist&&navigator.storage.persist()}catch(e){}
+  }catch(e){idb=null;toast("Storage unavailable — records will not be kept. Use Safari, not private browsing.")}
+}
+function idbWrite(fn){if(!idb)return;try{const t=idb.transaction("records","readwrite");fn(t.objectStore("records"));t.onerror=()=>toast("Could not save to phone storage")}catch(e){toast("Could not save to phone storage")}}
+const store={
+  all(){ if(N) return JSON.parse(N.getAll()); return mem.map(r=>JSON.parse(JSON.stringify(r))) },
+  save(r){ if(N) return Number(N.save(JSON.stringify(r)));
+    r=JSON.parse(JSON.stringify(r));
+    if(!r.id){r.id=mem.reduce((m,x)=>Math.max(m,x.id),0)+1;mem.push(r)} else {const i=mem.findIndex(x=>x.id===r.id);if(i<0)mem.push(r);else mem[i]=r}
+    idbWrite(os=>os.put(r)); return r.id },
+  remove(id){ if(N) return N.remove(id); mem=mem.filter(x=>x.id!==id); idbWrite(os=>os.delete(id)) },
+  importAll(list){ if(N) return Number(N.importAll(JSON.stringify(list))); let n=0; list.forEach(r=>{delete r.id;this.save(r);n++}); return n }
+};
+// file output: Android bridge, or browser download / iOS share sheet
+function webSave(name,mime,content){
+  const blob=new Blob([mime==="text/csv"?"﻿"+content:content],{type:mime}),a=document.createElement("a");
+  a.href=URL.createObjectURL(blob);a.download=name;document.body.appendChild(a);a.click();
+  setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},4000);return `Downloading ${name} — find it in the Files app › Downloads`}
+async function webShare(name,mime,content){
+  const f=new File([mime==="text/csv"?"﻿"+content:content],name,{type:mime});
+  if(navigator.canShare&&navigator.canShare({files:[f]})){try{await navigator.share({files:[f],title:name})}catch(e){}}
+  else toast(webSave(name,mime,content))}
+const io={
+  save:(n,m,c)=>toast(N?N.saveFile(n,m,c):webSave(n,m,c)),
+  share:(n,m,c)=>N?N.shareFile(n,m,c):webShare(n,m,c),
+  pick:()=>{if(N)return N.pickBackup();const i=document.createElement("input");i.type="file";i.accept=".json,application/json";
+    i.onchange=()=>{const f=i.files[0];if(!f)return;const rd=new FileReader();rd.onload=()=>window.onBackupLoaded(String(rd.result));rd.readAsText(f)};i.click()}
+};
+
+let records=[], editing=null;
+
+function toast(m){const t=document.createElement("div");t.className="toast";t.textContent=m;document.body.appendChild(t);setTimeout(()=>t.remove(),2600)}
+
+// ---------- build static form parts ----------
+let customSites=(()=>{try{return JSON.parse(localStorage.getItem("customSites")||"[]")}catch(e){return []}})();
+const allSites=()=>[...customSites];
+function saveSites(){try{localStorage.setItem("customSites",JSON.stringify(customSites))}catch(e){}}
+try{if(!localStorage.getItem("sitesV2")){ // upgrade from 1.2: existing users keep the old sites, now removable
+  if(store.all().length||customSites.length)customSites=[...OLD_SITES.filter(s=>!customSites.includes(s)),...customSites];
+  saveSites();localStorage.setItem("sitesV2","1")}}catch(e){}
+function renderSites(sel){const l=allSites();if(sel&&!l.includes(sel))l.push(sel);
+  $("#site").innerHTML=`<option value="">${l.length?"Select…":"No sites yet — add them with “Sites of care”"}</option>`+l.map(s=>`<option>${esc(s)}</option>`).join("");$("#site").value=sel||""}
+renderSites("");
+$("#block").innerHTML='<option value="">Select…</option>'+Object.entries(BLOCKS).map(([g,l])=>`<optgroup label="${esc(g)}">${l.map(b=>`<option>${esc(b)}</option>`).join("")}</optgroup>`).join("");
+function seg(el,opts){el.innerHTML=opts.map(o=>`<button type="button" data-v="${esc(o)}">${esc(o||"—")}</button>`).join("");el.onclick=e=>{const b=e.target.closest("button");if(!b)return;const was=b.classList.contains("on");el.querySelectorAll("button").forEach(x=>x.classList.remove("on"));if(!was)b.classList.add("on");el.dispatchEvent(new Event("change"))}}
+function segGet(el){const b=el.querySelector(".on");return b?b.dataset.v:null}
+function segSet(el,v){el.querySelectorAll("button").forEach(b=>b.classList.toggle("on",v!=null&&b.dataset.v===v))}
+$("#timeout").innerHTML=TIMEOUT.map(([k,l])=>`<div class="yn"><span>${esc(l)}</span><div class="seg" data-k="${k}"></div></div>`).join("");
+document.querySelectorAll("#timeout .seg").forEach(s=>seg(s,["Yes","No"]));
+document.querySelectorAll("[data-opts]").forEach(s=>seg(s,s.dataset.opts.split("|")));
+const chips=(id,list)=>$(id).innerHTML=list.map(x=>`<label class="chip"><input type="checkbox" value="${esc(x)}">${esc(x)}</label>`).join("");
+chips("#safety",SAFETY);chips("#infection",INFECTION);chips("#adjuvants",ADJ);chips("#complications",COMPS);
+const getChips=id=>[...document.querySelectorAll(id+" input:checked")].map(i=>i.value);
+const setChips=(id,v)=>document.querySelectorAll(id+" input").forEach(i=>i.checked=(v||[]).includes(i.value));
+
+function laRow(v={}){
+  const d=document.createElement("div");d.className="la";
+  d.innerHTML=`<button type="button" class="btn small x" title="Remove agent">✕</button>
+  <label class="f">Agent</label><select class="agent"><option value="">Select…</option>${Object.keys(LA).map(a=>`<option>${esc(a)}</option>`).join("")}</select>
+  <div class="otherAgent hide"><label class="f">Specify agent</label><input class="agentOther"></div>
+  <div class="row"><div><label class="f">Concentration</label><select class="conc"></select></div><div><label class="f">Volume (mL)</label><input class="vol" type="number" step="0.1" min="0" inputmode="decimal"></div></div>
+  <div class="concOtherWrap hide"><label class="f">Specify concentration</label><input class="concOther"></div>`;
+  const ag=d.querySelector(".agent"),cc=d.querySelector(".conc");
+  const fill=()=>{const l=LA[ag.value]||[];cc.innerHTML='<option value="">Select…</option>'+l.map(c=>`<option>${esc(c)}</option>`).join("")+'<option value="Other">Other…</option>';d.querySelector(".otherAgent").classList.toggle("hide",ag.value!=="Other")};
+  ag.onchange=()=>{fill();cc.onchange()};
+  cc.onchange=()=>d.querySelector(".concOtherWrap").classList.toggle("hide",cc.value!=="Other");
+  d.querySelector(".x").onclick=()=>{d.remove()};
+  ag.value=v.agent||"";fill();cc.value=v.conc||"";cc.onchange();
+  d.querySelector(".agentOther").value=v.agentOther||"";d.querySelector(".concOther").value=v.concOther||"";d.querySelector(".vol").value=v.vol??"";
+  $("#las").appendChild(d);
+}
+$("#addLa").onclick=()=>laRow();
+$("#block").onchange=()=>$("#blockOtherWrap").classList.toggle("hide",$("#block").value!=="Other (specify)");
+$("#catheter").addEventListener("change",()=>$("#catWrap").classList.toggle("hide",segGet($("#catheter"))!=="Yes"));
+$("#compOn").onchange=()=>$("#compWrap").classList.toggle("hide",!$("#compOn").checked);
+
+// ---------- form <-> record ----------
+function readForm(){
+  const timeout={};document.querySelectorAll("#timeout .seg").forEach(s=>timeout[s.dataset.k]=segGet(s));
+  const las=[...document.querySelectorAll(".la")].map(d=>({agent:d.querySelector(".agent").value,agentOther:d.querySelector(".agentOther").value.trim(),conc:d.querySelector(".conc").value,concOther:d.querySelector(".concOther").value.trim(),vol:d.querySelector(".vol").value})).filter(x=>x.agent);
+  const compOn=$("#compOn").checked;
+  return {id:editing?.id||null,created:editing?.created||new Date().toISOString(),date:$("#date").value,fileNo:$("#fileNo").value.trim(),age:$("#age").value,ageUnit:$("#ageUnit").value,site:$("#site").value,timeout,
+    block:$("#block").value,blockOther:$("#blockOther").value.trim(),side:segGet($("#side")),safety:getChips("#safety"),las,adjuvants:getChips("#adjuvants"),infection:getChips("#infection"),
+    catheter:segGet($("#catheter")),catheterNote:$("#catheterNote").value.trim(),efficacy:segGet($("#efficacy"))||"",
+    complicationsNoted:compOn,complications:compOn?getChips("#complications"):[],compNote:compOn?$("#compNote").value.trim():"",notes:$("#notes").value.trim()};
+}
+function fillForm(r){
+  $("#f").reset();$("#las").innerHTML="";
+  $("#date").value=r.date||today();$("#fileNo").value=r.fileNo||"";$("#age").value=r.age||"";$("#ageUnit").value=r.ageUnit||"years";renderSites(r.site||"");
+  document.querySelectorAll("#timeout .seg").forEach(s=>segSet(s,(r.timeout||{})[s.dataset.k]));
+  $("#block").value=r.block||"";$("#block").onchange();$("#blockOther").value=r.blockOther||"";segSet($("#side"),r.side);
+  setChips("#safety",r.safety);setChips("#adjuvants",r.adjuvants);setChips("#infection",r.infection);setChips("#complications",r.complications);
+  (r.las&&r.las.length?r.las:[{}]).forEach(laRow);
+  segSet($("#catheter"),r.catheter);$("#catheterNote").value=r.catheterNote||"";$("#catWrap").classList.toggle("hide",r.catheter!=="Yes");
+  segSet($("#efficacy"),r.efficacy??"");
+  $("#compOn").checked=!!r.complicationsNoted;$("#compWrap").classList.toggle("hide",!r.complicationsNoted);$("#compNote").value=r.compNote||"";$("#notes").value=r.notes||"";
+}
+const blockName=r=>r.block==="Other (specify)"?(r.blockOther||"Other block"):(r.block||"—");
+const laText=r=>(r.las||[]).map(l=>`${l.agent==="Other"?l.agentOther:l.agent} ${l.conc==="Other"?l.concOther:l.conc}${l.vol?` ${l.vol} mL`:""}`.trim()).join(" + ");
+
+// ---------- views ----------
+function show(view){
+  const isForm=view==="form";
+  $("#listView").classList.toggle("hide",isForm);$("#formView").classList.toggle("hide",!isForm);
+  $("#listBar").classList.toggle("hide",isForm);$("#formBar").classList.toggle("hide",!isForm);
+  $("#menuBtn").classList.toggle("hide",isForm);
+  $("#title").textContent=isForm?(editing?"Edit block":"New block"):"Block Log";
+  window.scrollTo(0,0);
+}
+function openForm(r,dup){
+  editing=dup?null:(r||null);
+  const base=r?JSON.parse(JSON.stringify(r)):{};
+  if(dup){delete base.id;delete base.created;base.block="";base.side=null;base.las=[];base.efficacy="";base.complicationsNoted=false;base.complications=[];base.compNote="";base.catheter=null;base.catheterNote=""}
+  fillForm(base);
+  $("#formActions").innerHTML=editing?`<div class="card" style="display:flex;gap:10px;flex-wrap:wrap"><button type="button" class="btn" id="dupBtn">Log another block, same patient</button><button type="button" class="btn danger" id="delBtn">Delete record</button></div>`:"";
+  if(editing){$("#dupBtn").onclick=()=>openForm(editing,true);$("#delBtn").onclick=()=>confirmBox("Delete this record permanently?","Delete",()=>{store.remove(editing.id);toast("Record deleted");refresh();show("list")})}
+  show("form");
+}
+function renderList(){
+  const q=$("#q").value.trim().toLowerCase(),p=$("#period").value;
+  const cut=p==="all"?"":new Date(Date.now()-Number(p)*864e5).toISOString().slice(0,10);
+  const rs=records.filter(r=>(!cut||r.date>=cut)&&(!q||[r.fileNo,blockName(r),r.site,laText(r),r.date].join(" ").toLowerCase().includes(q)));
+  const done=rs.filter(r=>r.efficacy),ok=done.filter(r=>r.efficacy==="Yes").length;
+  const comp=rs.filter(r=>r.complicationsNoted).length,pend=rs.length-done.length;
+  $("#stats").innerHTML=`<div class="stat"><b>${rs.length}</b><span>blocks</span></div><div class="stat"><b>${done.length?Math.round(ok/done.length*100)+"%":"—"}</b><span>fully effective</span></div><div class="stat"><b>${comp}</b><span>with problems</span></div>`;
+  if(!records.length){$("#list").innerHTML=`<div class="empty"><p><b>No blocks logged yet.</b></p><p>Start by adding your hospitals and clinics with “Sites of care”, then tap “New block”. Records stay on this phone only.</p></div>`;return}
+  $("#list").innerHTML=(pend?`<div class="alert">${pend} record${pend>1?"s still need":" still needs"} postoperative efficacy.</div>`:"")+(rs.length?rs.map(r=>{
+    const tNo=Object.values(r.timeout||{}).some(v=>v!=="Yes");
+    return `<button class="rec" data-id="${esc(r.id)}"><div class="t"><span>${esc(blockName(r))}${r.side?` · ${esc(r.side)}`:""}</span><span style="font-weight:500;color:var(--mute)">${esc(r.date)}</span></div>
+    <div class="s">File ${esc(r.fileNo)}${r.age?` · ${esc(r.age)} ${r.ageUnit==="months"?"mo":"y"}`:""} · ${esc(r.site)}</div>
+    ${laText(r)?`<div class="s">${esc(laText(r))}</div>`:""}
+    <div>${r.efficacy?`<span class="tag ${r.efficacy==="No"?"no":""}">Efficacy: ${esc(r.efficacy)}</span>`:`<span class="tag pend">Efficacy pending</span>`}${r.catheter==="Yes"?`<span class="tag">Catheter</span>`:""}${r.complicationsNoted?`<span class="tag no">Problem noted</span>`:""}${tNo?`<span class="tag no">Timeout incomplete</span>`:""}</div></button>`}).join(""):`<div class="empty">No records match.</div>`);
+}
+$("#list").onclick=e=>{const b=e.target.closest(".rec");if(b)openForm(records.find(r=>String(r.id)===b.dataset.id))};
+function refresh(){records=store.all().sort((a,b)=>(b.date||"").localeCompare(a.date||"")||(b.id-a.id));renderList()}
+$("#q").oninput=renderList;$("#period").onchange=renderList;
+$("#newBtn").onclick=()=>openForm(null);
+$("#cancelBtn").onclick=()=>{show("list")};
+$("#saveBtn").onclick=()=>{
+  const r=readForm(),miss=[];
+  if(!r.fileNo)miss.push("file number");if(!r.site)miss.push("site of care");if(!r.block)miss.push("block");if(!r.date)miss.push("date");
+  if(miss.length){toast("Please complete: "+miss.join(", "));return}
+  const doSave=()=>{r.updated=new Date().toISOString();store.save(r);toast("Saved");refresh();show("list")};
+  const open=Object.values(r.timeout).filter(v=>v!=="Yes").length;
+  if(open)confirmBox(`${open} timeout item${open>1?"s are":" is"} not marked “Yes”. Save anyway?`,"Save anyway",doSave);else doSave();
+};
+
+// ---------- modal / export ----------
+function modal(html){$("#modalRoot").innerHTML=`<div class="modal"><div class="card">${html}<button class="btn" data-close>Close</button></div></div>`;$("#modalRoot .modal").onclick=e=>{if(e.target.classList.contains("modal")||e.target.hasAttribute("data-close"))$("#modalRoot").innerHTML=""}}
+function confirmBox(msg,label,fn){modal(`<p style="margin-top:0">${esc(msg)}</p><button class="btn pri" id="okBtn">${esc(label)}</button>`);$("#okBtn").onclick=()=>{$("#modalRoot").innerHTML="";fn()}}
+const COLS=[["Date",r=>r.date],["File number",r=>r.fileNo],["Age",r=>r.age],["Age unit",r=>r.ageUnit],["Site of care",r=>r.site],
+  ...TIMEOUT.map(([k,l])=>["Timeout: "+l,r=>(r.timeout||{})[k]||""]),
+  ["Block",blockName],["Side",r=>r.side||""],["Safety measures",r=>(r.safety||[]).join("; ")],["Local anaesthetic(s)",laText],["Adjuvants",r=>(r.adjuvants||[]).join("; ")],
+  ["Infection prevention",r=>(r.infection||[]).join("; ")],["Catheter",r=>r.catheter||""],["Catheter details",r=>r.catheterNote],["Postop efficacy",r=>r.efficacy||"Pending"],
+  ["Complications noted",r=>r.complicationsNoted?"Yes":"No"],["Complications",r=>(r.complications||[]).join("; ")],["Complication description",r=>r.compNote],["Notes",r=>r.notes]];
+const csvCell=v=>{v=String(v??"");return /[",\n;]/.test(v)?`"${v.replace(/"/g,'""')}"`:v};
+const toCsv=()=>[COLS.map(c=>csvCell(c[0])).join(","),...records.map(r=>COLS.map(c=>csvCell(c[1](r))).join(","))].join("\r\n");
+const stamp=()=>today().replace(/-/g,"");
+// ---------- sites of care manager ----------
+function sitesModal(){
+  modal(`<h2>Sites of care</h2><p style="font-size:14px;color:var(--mute);margin-top:0">These sites appear in the dropdown when you log a block. Removing a site doesn’t change records that already use it.</p>
+  <div id="siteList"></div>
+  <label class="f" for="newSite">Add a site</label><input id="newSite" maxlength="80" placeholder="Hospital or clinic name">
+  <button class="btn pri" id="addSiteBtn">Add site</button>`);
+  const draw=()=>{$("#siteList").innerHTML=(customSites.length?"":`<p style="color:var(--mute);font-size:14px">No sites added yet.</p>`)+customSites.map((s,i)=>`<div class="yn"><span>${esc(s)}</span><button class="btn small danger" data-i="${i}">Remove</button></div>`).join("")};
+  draw();
+  $("#siteList").onclick=e=>{const b=e.target.closest("button[data-i]");if(!b)return;const name=customSites[b.dataset.i];customSites.splice(b.dataset.i,1);saveSites();draw();toast(`Removed “${name}”. Existing records keep it.`)};
+  $("#addSiteBtn").onclick=()=>{const v=$("#newSite").value.trim().replace(/\s+/g," ");if(!v)return;
+    if(allSites().some(s=>s.toLowerCase()===v.toLowerCase())){toast("That site is already listed");return}
+    customSites.push(v);saveSites();$("#newSite").value="";draw();toast(`Added “${v}”`)};
+}
+$("#sitesBtn").onclick=sitesModal;
+
+// ---------- REDCap de-identified export ----------
+// Choice codes are slugs of the option text, so they stay stable if lists are reordered or extended.
+const slug=s=>String(s).toLowerCase().normalize("NFKD").replace(/[^a-z0-9]+/g,"_").replace(/^_+/,"").slice(0,32).replace(/_+$/,"")||"x";
+const choices=list=>list.map(x=>`${slug(x)}, ${String(x).replace(/\|/g,"/")}`).join(" | ");
+const AGE_BANDS=["<1 year","1-11 years","12-17 years","18-29 years","30-39 years","40-49 years","50-59 years","60-69 years","70-79 years","80-89 years","90+ years"];
+function ageBand(r){if(r.age===""||r.age==null||isNaN(Number(r.age)))return "";let y=Number(r.age);if(r.ageUnit==="months")y/=12;
+  const i=y<1?0:y<12?1:y<18?2:y<30?3:y>=90?10:Math.min(9,Math.floor(y/10)+1);return i+1}
+const ALLBLOCKS=Object.values(BLOCKS).flat();
+function rcPref(){try{return Object.assign({code:"BL",fac:false,txt:false},JSON.parse(localStorage.getItem("rcPref")||"{}"))}catch(e){return {code:"BL",fac:false,txt:false}}}
+function rcFields(){ // [name, type, label, choices, note, validation, min, max, branching]
+  const f=[["record_id","text","Study record ID"],["proc_year","text","Year of procedure","","","integer","2000","2100"],["proc_month","text","Month of procedure (1-12)","","","integer","1","12"],
+    ["age_band","dropdown","Age band",AGE_BANDS.map((a,i)=>`${i+1}, ${a}`).join(" | ")],["facility","dropdown","Facility",choices([...new Set([...allSites(),...records.map(r=>r.site).filter(Boolean)])]),"Blank if not exported"]];
+  TIMEOUT.forEach(([k,l])=>f.push(["to_"+k,"yesno","Timeout: "+l]));
+  f.push(["block","dropdown","Block performed",choices(ALLBLOCKS)],["block_other","text","Other block (specify)","","","","","","[block] = 'other_specify'"],["side","radio","Side",choices(["Left","Right","Bilateral","Midline"])],
+    ["safety","checkbox","Safety measures used",choices(SAFETY)]);
+  [1,2,3].forEach(n=>f.push([`la${n}_agent`,"dropdown",`Local anaesthetic ${n}`,choices(Object.keys(LA)),"","","","",n>1?`[la${n-1}_agent] <> ''`:""],
+    [`la${n}_agent_other`,"text",`Local anaesthetic ${n}: other (specify)`,"","","","","",`[la${n}_agent] = 'other'`],
+    [`la${n}_conc`,"text",`Local anaesthetic ${n}: concentration`,"","e.g. 0.5%","","","",`[la${n}_agent] <> ''`],
+    [`la${n}_vol`,"text",`Local anaesthetic ${n}: volume (mL)`,"","","number","0","200",`[la${n}_agent] <> ''`]));
+  f.push(["adjuvants","checkbox","Adjuvants",choices(ADJ)],["infection","checkbox","Infection prevention measures",choices(INFECTION)],["catheter","yesno","Indwelling catheter"],
+    ["catheter_note","text","Catheter details","","","","","","[catheter] = '1'"],["efficacy","radio","Postoperative block efficacy",choices(["Yes","Partial","No"]),"Blank = not assessed"],
+    ["comp_noted","yesno","Complications / problems noted"],["complications","checkbox","Complications / problems",choices(COMPS),"","","","","[comp_noted] = '1'"],
+    ["comp_note","notes","Complication description","","","","","","[comp_noted] = '1'"],["notes","notes","Notes"]);
+  return f;
+}
+function rcDict(){
+  const head=["Variable / Field Name","Form Name","Section Header","Field Type","Field Label","Choices, Calculations, OR Slider Labels","Field Note","Text Validation Type OR Show Slider Number","Text Validation Min","Text Validation Max","Identifier?","Branching Logic (Show field only if...)","Required Field?","Custom Alignment","Question Number (surveys only)","Matrix Group Name","Matrix Ranking?","Field Annotation"];
+  const rows=rcFields().map(([n,t,l,c="",note="",v="",mn="",mx="",br=""])=>[n,"block_log","",t,l,c,note,v,mn,mx,"",br,n==="record_id"?"y":"","","","","",""]);
+  return [head,...rows].map(r=>r.map(csvCell).join(",")).join("\r\n");
+}
+function rcData(o){
+  const fields=rcFields(),cols=[];
+  fields.forEach(([n,t,,c])=>{if(t==="checkbox")c.split(" | ").forEach(ch=>cols.push(n+"___"+ch.split(",")[0]));else cols.push(n)});
+  const FREE=new Set(["block_other","la1_agent_other","la2_agent_other","la3_agent_other","catheter_note","comp_note","notes"]);
+  const yn=v=>v==="Yes"?"1":v==="No"?"0":"";
+  const rows=[...records].sort((a,b)=>a.id-b.id).map(r=>{
+    const d={record_id:`${o.code}-${String(r.id).padStart(4,"0")}`};
+    const [y,m]=(r.date||"").split("-");d.proc_year=y||"";d.proc_month=m?String(Number(m)):"";
+    d.age_band=ageBand(r);d.facility=o.fac&&r.site?slug(r.site):"";
+    TIMEOUT.forEach(([k])=>d["to_"+k]=yn((r.timeout||{})[k]));
+    d.block=r.block?slug(r.block):"";d.block_other=r.blockOther;d.side=r.side?slug(r.side):"";
+    (r.las||[]).slice(0,3).forEach((l,i)=>{const n=i+1;d[`la${n}_agent`]=slug(l.agent);d[`la${n}_agent_other`]=l.agentOther;d[`la${n}_conc`]=l.conc==="Other"?l.concOther:l.conc;d[`la${n}_vol`]=l.vol});
+    d.catheter=yn(r.catheter);d.catheter_note=r.catheterNote;d.efficacy=r.efficacy?slug(r.efficacy):"";d.comp_noted=r.complicationsNoted?"1":"0";d.comp_note=r.compNote;d.notes=r.notes;
+    [["safety",r.safety],["adjuvants",r.adjuvants],["infection",r.infection],["complications",r.complications]].forEach(([n,v])=>{const s=new Set((v||[]).map(slug));cols.filter(c=>c.startsWith(n+"___")).forEach(c=>d[c]=s.has(c.slice(n.length+3))?"1":"0")});
+    if(!o.txt)FREE.forEach(k=>d[k]="");
+    return cols.map(c=>csvCell(d[c]??"")).join(",");
+  });
+  return [cols.join(","),...rows].join("\r\n");
+}
+$("#menuBtn").onclick=()=>{
+  modal(`<h2>Export & backup</h2><p style="font-size:14px;color:var(--mute);margin-top:0">${records.length} records stored on this phone. Exports contain patient identifiers — store and send them securely.</p>
+  <button class="btn pri" id="csvBtn">Save spreadsheet (CSV)</button>
+  <button class="btn" id="shareBtn">Share spreadsheet (CSV)…</button>
+  <button class="btn" id="bakBtn">Save full backup</button>
+  <button class="btn" id="resBtn">Restore from backup file…</button>
+  <h2 style="margin-top:18px">Research export (REDCap)</h2>
+  <p style="font-size:14px;color:var(--mute);margin-top:0">No file numbers or dates: age is grouped into bands, the date is reduced to month and year, and each record gets a study code.</p>
+  <label class="f" for="rcCode">Your investigator code (prefix for study IDs)</label><input id="rcCode" maxlength="6" value="${esc(rcPref().code)}">
+  <label class="chip" style="margin-top:10px"><input type="checkbox" id="rcFac" ${rcPref().fac?"checked":""}> Include facility name</label>
+  <label class="chip" style="margin-top:8px"><input type="checkbox" id="rcTxt" ${rcPref().txt?"checked":""}> Include free-text fields (check them for names first)</label>
+  <button class="btn pri" id="rcDataBtn" style="margin-top:12px">Save de-identified REDCap data</button>
+  <button class="btn" id="rcShareBtn">Share de-identified REDCap data…</button>
+  <button class="btn" id="rcDictBtn">Save REDCap data dictionary (project setup)</button>`);
+  const rcOpts=()=>{const o={code:($("#rcCode").value.toUpperCase().replace(/[^A-Z0-9]/g,"")||"BL"),fac:$("#rcFac").checked,txt:$("#rcTxt").checked};try{localStorage.setItem("rcPref",JSON.stringify(o))}catch(e){}return o};
+  $("#rcDataBtn").onclick=()=>{const o=rcOpts();io.save(`blocklog_redcap_${o.code}_${stamp()}.csv`,"text/csv",rcData(o))};
+  $("#rcShareBtn").onclick=()=>{const o=rcOpts();io.share(`blocklog_redcap_${o.code}_${stamp()}.csv`,"text/csv",rcData(o))};
+  $("#rcDictBtn").onclick=()=>{io.save(`blocklog_redcap_dictionary.csv`,"text/csv",rcDict())};
+  $("#csvBtn").onclick=()=>{io.save(`blocklog_${stamp()}.csv`,"text/csv",toCsv())};
+  $("#shareBtn").onclick=()=>{io.share(`blocklog_${stamp()}.csv`,"text/csv",toCsv())};
+  $("#bakBtn").onclick=()=>{io.save(`blocklog_backup_${stamp()}.json`,"application/json",JSON.stringify({app:"BlockLog",version:1,sites:customSites,records}))};
+  $("#resBtn").onclick=()=>{io.pick()};
+};
+window.onBackupLoaded=text=>{
+  try{const d=JSON.parse(text),list=Array.isArray(d)?d:d.records;if(!Array.isArray(list))throw 0;
+    if(Array.isArray(d.sites)){d.sites.forEach(s=>{if(typeof s==="string"&&s.trim()&&!allSites().includes(s))customSites.push(s)});saveSites();renderSites("")}
+    const have=new Set(records.map(r=>r.created+"|"+r.fileNo)),fresh=list.filter(r=>!have.has(r.created+"|"+r.fileNo));
+    const n=store.importAll(fresh);$("#modalRoot").innerHTML="";refresh();toast(`Restored ${n} record${n===1?"":"s"} (${list.length-fresh.length} already present)`)}
+  catch(e){toast("That file is not a Block Log backup")}
+};
+window.onNativeBack=()=>{if($("#modalRoot").innerHTML){$("#modalRoot").innerHTML="";return true}if(!$("#formView").classList.contains("hide")){show("list");return true}return false};
+
+initStore().then(()=>{refresh();show("list")});
+if(!N&&"serviceWorker" in navigator&&location.protocol==="https:")navigator.serviceWorker.register("sw.js").catch(()=>{});
+}
+</script>
+</body>
+</html>
